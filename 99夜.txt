@@ -1,596 +1,278 @@
--- HaloBox UI 库源码
-local HaloBoxUI = {}
-HaloBoxUI.__index = HaloBoxUI
+if debugX then
+	warn('Initialising Rayfield')
+end
 
--- 服务获取
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local function getService(name)
+	local service = game:GetService(name)
+	return if cloneref then cloneref(service) else service
+end
 
--- 默认样式配置
-local DefaultConfig = {
-    Title = "HaloBox UI",
-    Version = "1.0.0",
-    Size = UDim2.new(0, 550, 0, 420),
-    Position = UDim2.new(0.02, 0, 0.5, 0),
-    ToggleKey = Enum.KeyCode.RightShift,
-    Draggable = true,
-    BgColor = Color3.fromRGB(30, 30, 40),
-    BgTransparency = 0.3,
-    NavWidth = 180,
-    HighlightColor = Color3.fromRGB(50, 120, 255),
-    TextColor = Color3.fromRGB(255, 255, 255),
-    ToggleOnColor = Color3.fromRGB(50, 180, 255),
-    ToggleOffColor = Color3.fromRGB(80, 80, 90),
+local function loadWithTimeout(url: string, timeout: number?): ...any
+	assert(type(url) == "string", "Expected string, got " .. type(url))
+	timeout = timeout or 5
+	local requestCompleted = false
+	local success, result = false, nil
+	local requestThread = task.spawn(function()
+		local fetchSuccess, fetchResult = pcall(game.HttpGet, game, url)
+		if not fetchSuccess or #fetchResult == 0 then
+			if #fetchResult == 0 then
+				fetchResult = "Empty response"
+			end
+			success, result = false, fetchResult
+			requestCompleted = true
+			return
+		end
+		local content = fetchResult
+		local execSuccess, execResult = pcall(function()
+			return loadstring(content)()
+		end)
+		success, result = execSuccess, execResult
+		requestCompleted = true
+	end)
+	local timeoutThread = task.delay(timeout, function()
+		if not requestCompleted then
+			warn("Request for " .. url .. " timed out after " .. tostring(timeout) .. " seconds")
+			task.cancel(requestThread)
+			result = "Request timed out"
+			requestCompleted = true
+		end
+	end)
+	while not requestCompleted do
+		task.wait()
+	end
+	if coroutine.status(timeoutThread) ~= "dead" then
+		task.cancel(timeoutThread)
+	end
+	if not success then
+		warn("Failed to process " .. tostring(url) .. ": " .. tostring(result))
+	end
+	return if success then result else nil
+end
+
+local requestsDisabled = true
+local InterfaceBuild = '3K3W'
+local Release = "Build 1.68"
+local RayfieldFolder = "Rayfield"
+local ConfigurationFolder = RayfieldFolder.."/Configurations"
+local ConfigurationExtension = ".rfld"
+local settingsTable = {
+	General = {
+		rayfieldOpen = {Type = 'bind', Value = 'K', Name = 'Rayfield Keybind'},
+	},
+	System = {
+		usageAnalytics = {Type = 'toggle', Value = true, Name = 'Anonymised Analytics'},
+	}
 }
+local overriddenSettings: { [string]: any } = {}
 
--- 内部工具函数
-local function CreateCorner(radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius)
-    return corner
+local function overrideSetting(category: string, name: string, value: any)
+	overriddenSettings[category .. "." .. name] = value
 end
 
-local function CreatePadding(left, right, top, bottom)
-    local padding = Instance.new("UIPadding")
-    padding.PaddingLeft = UDim.new(0, left)
-    padding.PaddingRight = UDim.new(0, right)
-    padding.PaddingTop = UDim.new(0, top)
-    padding.PaddingBottom = UDim.new(0, bottom)
-    return padding
+local function getSetting(category: string, name: string): any
+	if overriddenSettings[category .. "." .. name] ~= nil then
+		return overriddenSettings[category .. "." .. name]
+	elseif settingsTable[category][name] ~= nil then
+		return settingsTable[category][name].Value
+	end
 end
 
-local function CreateListLayout(padding, sortOrder)
-    local layout = Instance.new("UIListLayout")
-    layout.SortOrder = sortOrder or Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, padding)
-    return layout
+if requestsDisabled then
+	overrideSetting("System", "usageAnalytics", false)
 end
 
--- 创建主窗口
-function HaloBoxUI:CreateWindow(userConfig)
-    local self = setmetatable({}, HaloBoxUI)
-    self.Config = setmetatable(userConfig or {}, {__index = DefaultConfig})
-    self.Tabs = {}
-    self.CurrentTab = nil
-    self.Open = true
-    self.Connections = {}
+local HttpService = getService('HttpService')
+local RunService = getService('RunService')
+local useStudio = RunService:IsStudio() or false
+local settingsCreated = false
+local settingsInitialized = false
+local cachedSettings
+local prompt = useStudio and require(script.Parent.prompt) or loadWithTimeout('https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/prompt.lua')
+local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
 
-    -- 清空重复创建的UI
-    if PlayerGui:FindFirstChild("HaloBoxUIMain") then
-        PlayerGui.HaloBoxUIMain:Destroy()
-    end
-
-    -- 主ScreenGui
-    self.ScreenGui = Instance.new("ScreenGui")
-    self.ScreenGui.Name = "HaloBoxUIMain"
-    self.ScreenGui.ResetOnSpawn = false
-    self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    self.ScreenGui.Parent = PlayerGui
-
-    -- 主窗口容器
-    self.MainFrame = Instance.new("Frame")
-    self.MainFrame.Name = "MainFrame"
-    self.MainFrame.Size = self.Config.Size
-    self.MainFrame.Position = self.Config.Position
-    self.MainFrame.AnchorPoint = Vector2.new(0, 0.5)
-    self.MainFrame.BackgroundColor3 = self.Config.BgColor
-    self.MainFrame.BackgroundTransparency = self.Config.BgTransparency
-    self.MainFrame.BorderSizePixel = 0
-    self.MainFrame.Parent = self.ScreenGui
-    CreateCorner(12).Parent = self.MainFrame
-
-    -- 左侧导航栏
-    self.NavSidebar = Instance.new("Frame")
-    self.NavSidebar.Name = "NavSidebar"
-    self.NavSidebar.Size = UDim2.new(0, self.Config.NavWidth, 1, 0)
-    self.NavSidebar.Position = UDim2.new(0, 0, 0, 0)
-    self.NavSidebar.BackgroundColor3 = self.Config.BgColor
-    self.NavSidebar.BackgroundTransparency = 0.2
-    self.NavSidebar.BorderSizePixel = 0
-    self.NavSidebar.Parent = self.MainFrame
-    CreateCorner(12).Parent = self.NavSidebar
-    CreatePadding(10, 10, 15, 15).Parent = self.NavSidebar
-    self.NavLayout = CreateListLayout(8)
-    self.NavLayout.Parent = self.NavSidebar
-
-    -- 标题与版本号
-    self.TitleLabel = Instance.new("TextLabel")
-    self.TitleLabel.Name = "TitleLabel"
-    self.TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-    self.TitleLabel.BackgroundTransparency = 1
-    self.TitleLabel.Text = self.Config.Title
-    self.TitleLabel.TextColor3 = self.Config.TextColor
-    self.TitleLabel.TextSize = 24
-    self.TitleLabel.Font = Enum.Font.SourceSansBold
-    self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.TitleLabel.Parent = self.NavSidebar
-
-    self.VersionLabel = Instance.new("TextLabel")
-    self.VersionLabel.Name = "VersionLabel"
-    self.VersionLabel.Size = UDim2.new(1, 0, 0, 20)
-    self.VersionLabel.BackgroundTransparency = 1
-    self.VersionLabel.Text = "version "..self.Config.Version
-    self.VersionLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-    self.VersionLabel.TextSize = 14
-    self.VersionLabel.Font = Enum.Font.SourceSans
-    self.VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.VersionLabel.Parent = self.NavSidebar
-
-    -- 右侧内容区
-    self.ContentPanel = Instance.new("Frame")
-    self.ContentPanel.Name = "ContentPanel"
-    self.ContentPanel.Size = UDim2.new(1, -self.Config.NavWidth, 1, 0)
-    self.ContentPanel.Position = UDim2.new(1, -self.Config.NavWidth, 0, 0)
-    self.ContentPanel.BackgroundTransparency = 1
-    self.ContentPanel.BorderSizePixel = 0
-    self.ContentPanel.Parent = self.MainFrame
-    CreatePadding(20, 20, 15, 15).Parent = self.ContentPanel
-
-    -- 通知容器
-    self.NotifyContainer = Instance.new("Frame")
-    self.NotifyContainer.Name = "NotifyContainer"
-    self.NotifyContainer.Size = UDim2.new(0, 300, 1, 0)
-    self.NotifyContainer.Position = UDim2.new(1, -20, 0, 20)
-    self.NotifyContainer.AnchorPoint = Vector2.new(1, 0)
-    self.NotifyContainer.BackgroundTransparency = 1
-    self.NotifyContainer.Parent = self.ScreenGui
-    local notifyLayout = CreateListLayout(10)
-    notifyLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    notifyLayout.Parent = self.NotifyContainer
-
-    -- 初始化拖拽与快捷键
-    if self.Config.Draggable then self:SetupDrag() end
-    self:SetupToggleKey()
-
-    return self
+if not prompt and not useStudio then
+	warn("Failed to load prompt library, using fallback")
+	prompt = {
+		create = function() end
+	}
 end
 
--- 窗口拖拽功能
-function HaloBoxUI:SetupDrag()
-    local dragging = false
-    local dragStart, startPos = nil, nil
-
-    local function UpdateDrag(input)
-        if not dragging then return end
-        local delta = input.Position - dragStart
-        self.MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    self.MainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = self.MainFrame.Position
-        end
-    end)
-    self.MainFrame.InputChanged:Connect(UpdateDrag)
-    self.MainFrame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
+local function callSafely(func, ...)
+	if func then
+		local success, result = pcall(func, ...)
+		if not success then
+			warn("Rayfield | Function failed with error: ", result)
+			return false
+		else
+			return result
+		end
+	end
 end
 
--- UI显示隐藏快捷键
-function HaloBoxUI:SetupToggleKey()
-    local function ToggleUI(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == self.Config.ToggleKey then
-            self.Open = not self.Open
-            self.MainFrame.Visible = self.Open
-        end
-    end
-    local conn = UserInputService.InputBegan:Connect(ToggleUI)
-    table.insert(self.Connections, conn)
+local function ensureFolder(folderPath)
+	if isfolder and not callSafely(isfolder, folderPath) then
+		callSafely(makefolder, folderPath)
+	end
 end
 
--- 修改UI快捷键
-function HaloBoxUI:SetToggleKey(key)
-    self.Config.ToggleKey = key
-    for _, conn in ipairs(self.Connections) do if conn then conn:Disconnect() end end
-    self.Connections = {}
-    self:SetupToggleKey()
+local function loadSettings()
+	local file = nil
+	local success, result =	pcall(function()
+		task.spawn(function()
+			if callSafely(isfolder, RayfieldFolder) then
+				if callSafely(isfile, RayfieldFolder..'/settings'..ConfigurationExtension) then
+					file = callSafely(readfile, RayfieldFolder..'/settings'..ConfigurationExtension)
+				end
+			end
+			if useStudio then
+				file = [[
+		{"General":{"rayfieldOpen":{"Value":"K","Type":"bind","Name":"Rayfield Keybind","Element":{"HoldToInteract":false,"Ext":true,"Name":"Rayfield Keybind","Set":null,"CallOnChange":true,"Callback":null,"CurrentKeybind":"K"}}},"System":{"usageAnalytics":{"Value":false,"Type":"toggle","Name":"Anonymised Analytics","Element":{"Ext":true,"Name":"Anonymised Analytics","Set":null,"CurrentValue":false,"Callback":null}}}}
+	]]
+			end
+			if file then
+				local success, decodedFile = pcall(function() return HttpService:JSONDecode(file) end)
+				if success then
+					file = decodedFile
+				else
+					file = {}
+				end
+			else
+				file = {}
+			end
+			if not settingsCreated then
+				cachedSettings = file
+				return
+			end
+			if #file > 0 then
+				for categoryName, settingCategory in pairs(settingsTable) do
+					if file[categoryName] then
+						for settingName, setting in pairs(settingCategory) do
+							if file[categoryName][settingName] then
+								setting.Value = file[categoryName][settingName].Value
+								setting.Element:Set(getSetting(categoryName, settingName))
+							end
+						end
+					end
+				end
+			else
+				for settingName, settingValue in overriddenSettings do
+					local split = string.split(settingName, ".")
+					assert(#split == 2, "Rayfield | Invalid overridden setting name: " .. settingName)
+					local categoryName = split[1]
+					local settingNameOnly = split[2]
+					if settingsTable[categoryName] and settingsTable[categoryName][settingNameOnly] then
+						settingsTable[categoryName][settingNameOnly].Element:Set(settingValue)
+					end
+				end
+			end
+			settingsInitialized = true
+		end)
+	end)
+	if not success then
+		if writefile then
+			warn('Rayfield had an issue accessing configuration saving capability.')
+		end
+	end
 end
 
--- 发送通知弹窗
-function HaloBoxUI:Notify(config)
-    local notify = Instance.new("Frame")
-    notify.Name = "Notify"
-    notify.Size = UDim2.new(1, 0, 0, 80)
-    notify.BackgroundColor3 = self.Config.BgColor
-    notify.BackgroundTransparency = 0.2
-    notify.BorderSizePixel = 0
-    CreateCorner(8).Parent = notify
-    CreatePadding(15, 15, 10, 10).Parent = notify
-
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Size = UDim2.new(1, 0, 0, 25)
-    title.BackgroundTransparency = 1
-    title.Text = config.Title or "通知"
-    title.TextColor3 = self.Config.TextColor
-    title.TextSize = 18
-    title.Font = Enum.Font.SourceSansBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = notify
-
-    local content = Instance.new("TextLabel")
-    content.Name = "Content"
-    content.Size = UDim2.new(1, 0, 0, 35)
-    content.Position = UDim2.new(0, 0, 0, 25)
-    content.BackgroundTransparency = 1
-    content.Text = config.Content or ""
-    content.TextColor3 = Color3.fromRGB(200, 200, 200)
-    content.TextSize = 14
-    content.Font = Enum.Font.SourceSans
-    content.TextWrapped = true
-    content.TextXAlignment = Enum.TextXAlignment.Left
-    content.Parent = notify
-
-    notify.Parent = self.NotifyContainer
-    local tweenIn = TweenService:Create(notify, TweenInfo.new(0.3), {Transparency = 0})
-    tweenIn:Play()
-
-    task.delay(config.Duration or 3, function()
-        local tweenOut = TweenService:Create(notify, TweenInfo.new(0.3), {Transparency = 1})
-        tweenOut:Play()
-        tweenOut.Completed:Connect(function() notify:Destroy() end)
-    end)
+if debugX then
+	warn('Now Loading Settings Configuration')
+end
+loadSettings()
+if debugX then
+	warn('Settings Loaded')
 end
 
--- 添加标签页
-function HaloBoxUI:AddTab(config)
-    local tab = {}
-    tab.Config = config
-    tab.Name = config.Title or "Tab"
-    tab.Icon = config.Icon or "📄"
-    tab.Components = {}
+local analyticsLib
+local sendReport = function(ev_n, sc_n) warn("Failed to load report function") end
 
-    -- 导航按钮
-    tab.NavBtn = Instance.new("TextButton")
-    tab.NavBtn.Name = tab.Name.."Btn"
-    tab.NavBtn.Size = UDim2.new(1, 0, 0, 40)
-    tab.NavBtn.BackgroundColor3 = self.Config.BgColor
-    tab.NavBtn.BackgroundTransparency = 1
-    tab.NavBtn.BorderSizePixel = 0
-    tab.NavBtn.Text = tab.Icon.."  "..tab.Name
-    tab.NavBtn.TextColor3 = self.Config.TextColor
-    tab.NavBtn.TextSize = 18
-    tab.NavBtn.Font = Enum.Font.SourceSansSemibold
-    tab.NavBtn.TextXAlignment = Enum.TextXAlignment.Left
-    tab.NavBtn.LayoutOrder = #self.Tabs + 3
-    tab.NavBtn.Parent = self.NavSidebar
-    CreateCorner(8).Parent = tab.NavBtn
-
-    -- 选中高亮条
-    tab.Highlight = Instance.new("Frame")
-    tab.Highlight.Name = "Highlight"
-    tab.Highlight.Size = UDim2.new(0, 4, 0.8, 0)
-    tab.Highlight.Position = UDim2.new(0, -10, 0.5, 0)
-    tab.Highlight.AnchorPoint = Vector2.new(0, 0.5)
-    tab.Highlight.BackgroundColor3 = self.Config.HighlightColor
-    tab.Highlight.BorderSizePixel = 0
-    tab.Highlight.Visible = false
-    tab.Highlight.Parent = tab.NavBtn
-
-    -- 内容滚动容器
-    tab.ContentFrame = Instance.new("ScrollingFrame")
-    tab.ContentFrame.Name = tab.Name.."Content"
-    tab.ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-    tab.ContentFrame.BackgroundTransparency = 1
-    tab.ContentFrame.BorderSizePixel = 0
-    tab.ContentFrame.ScrollBarThickness = 4
-    tab.ContentFrame.ScrollBarImageColor3 = self.Config.HighlightColor
-    tab.ContentFrame.Visible = false
-    tab.ContentFrame.Parent = self.ContentPanel
-    CreatePadding(0, 10, 0, 0).Parent = tab.ContentFrame
-    tab.ContentLayout = CreateListLayout(10)
-    tab.ContentLayout.Parent = tab.ContentFrame
-
-    -- 自动调整滚动区域
-    tab.ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        tab.ContentFrame.CanvasSize = UDim2.new(0, 0, 0, tab.ContentLayout.AbsoluteContentSize.Y + 20)
-    end)
-
-    -- 标签切换事件
-    tab.NavBtn.MouseButton1Click:Connect(function() self:SelectTab(tab) end)
-    table.insert(self.Tabs, tab)
-    if #self.Tabs == 1 then self:SelectTab(tab) end
-
-    -- 标签页组件方法
-    function tab:AddToggle(config)
-        local toggle = {}
-        toggle.Config = config
-        toggle.State = config.Default or false
-        toggle.Callback = config.Callback or function() end
-
-        toggle.Frame = Instance.new("Frame")
-        toggle.Frame.Name = config.Name.."Toggle"
-        toggle.Frame.Size = UDim2.new(1, 0, 0, 45)
-        toggle.Frame.BackgroundTransparency = 1
-        toggle.Frame.LayoutOrder = #self.Components + 1
-        toggle.Frame.Parent = self.ContentFrame
-
-        local nameLabel = Instance.new("TextLabel")
-        nameLabel.Size = UDim2.new(0.7, 0, 1, 0)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = config.Name or "Toggle"
-        nameLabel.TextColor3 = self.Config.TextColor
-        nameLabel.TextSize = 18
-        nameLabel.Font = Enum.Font.SourceSans
-        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        nameLabel.Parent = toggle.Frame
-
-        local toggleBg = Instance.new("Frame")
-        toggleBg.Size = UDim2.new(0, 50, 0, 26)
-        toggleBg.Position = UDim2.new(1, 0, 0.5, 0)
-        toggleBg.AnchorPoint = Vector2.new(1, 0.5)
-        toggleBg.BackgroundColor3 = toggle.State and self.Config.ToggleOnColor or self.Config.ToggleOffColor
-        toggleBg.BorderSizePixel = 0
-        toggleBg.Parent = toggle.Frame
-        CreateCorner(13).Parent = toggleBg
-
-        local toggleCircle = Instance.new("Frame")
-        toggleCircle.Size = UDim2.new(0, 20, 0, 20)
-        toggleCircle.Position = toggle.State and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-        toggleCircle.AnchorPoint = Vector2.new(0, 0.5)
-        toggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        toggleCircle.BorderSizePixel = 0
-        toggleCircle.Parent = toggleBg
-        CreateCorner(10).Parent = toggleCircle
-
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-        toggleBtn.BackgroundTransparency = 1
-        toggleBtn.Text = ""
-        toggleBtn.ZIndex = 10
-        toggleBtn.Parent = toggleBg
-
-        toggleBtn.MouseButton1Click:Connect(function()
-            toggle.State = not toggle.State
-            toggleBg.BackgroundColor3 = toggle.State and self.Config.ToggleOnColor or self.Config.ToggleOffColor
-            local tween = TweenService:Create(toggleCircle, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = toggle.State and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-            })
-            tween:Play()
-            toggle.Callback(toggle.State)
-        end)
-
-        function toggle:SetState(state)
-            toggle.State = state
-            toggleBg.BackgroundColor3 = toggle.State and self.Config.ToggleOnColor or self.Config.ToggleOffColor
-            toggleCircle.Position = toggle.State and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-            toggle.Callback(toggle.State)
-        end
-        function toggle:Destroy() toggle.Frame:Destroy() end
-
-        table.insert(self.Components, toggle)
-        return toggle
-    end
-
-    function tab:AddButton(config)
-        local button = {}
-        button.Config = config
-        button.Callback = config.Callback or function() end
-
-        button.Frame = Instance.new("TextButton")
-        button.Frame.Name = config.Name.."Button"
-        button.Frame.Size = UDim2.new(1, 0, 0, 45)
-        button.Frame.BackgroundColor3 = self.Config.HighlightColor
-        button.Frame.BackgroundTransparency = 0.3
-        button.Frame.BorderSizePixel = 0
-        button.Frame.Text = (config.Icon or "").."  "..(config.Name or "Button")
-        button.Frame.TextColor3 = self.Config.TextColor
-        button.Frame.TextSize = 18
-        button.Frame.Font = Enum.Font.SourceSansSemibold
-        button.Frame.LayoutOrder = #self.Components + 1
-        button.Frame.Parent = self.ContentFrame
-        CreateCorner(8).Parent = button.Frame
-
-        button.Frame.MouseButton1Click:Connect(function() button.Callback() end)
-        function button:Destroy() button.Frame:Destroy() end
-
-        table.insert(self.Components, button)
-        return button
-    end
-
-    function tab:AddSlider(config)
-        local slider = {}
-        slider.Config = config
-        slider.Min = config.Min or 0
-        slider.Max = config.Max or 100
-        slider.Default = config.Default or slider.Min
-        slider.Step = config.Step or 1
-        slider.Value = slider.Default
-        slider.Callback = config.Callback or function() end
-
-        slider.Frame = Instance.new("Frame")
-        slider.Frame.Name = config.Name.."Slider"
-        slider.Frame.Size = UDim2.new(1, 0, 0, 60)
-        slider.Frame.BackgroundTransparency = 1
-        slider.Frame.LayoutOrder = #self.Components + 1
-        slider.Frame.Parent = self.ContentFrame
-
-        local nameLabel = Instance.new("TextLabel")
-        nameLabel.Size = UDim2.new(0.7, 0, 0, 25)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = config.Name or "Slider"
-        nameLabel.TextColor3 = self.Config.TextColor
-        nameLabel.TextSize = 18
-        nameLabel.Font = Enum.Font.SourceSans
-        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        nameLabel.Parent = slider.Frame
-
-        local valueLabel = Instance.new("TextLabel")
-        valueLabel.Size = UDim2.new(0.3, 0, 0, 25)
-        valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
-        valueLabel.BackgroundTransparency = 1
-        valueLabel.Text = tostring(slider.Value)
-        valueLabel.TextColor3 = self.Config.HighlightColor
-        valueLabel.TextSize = 18
-        valueLabel.Font = Enum.Font.SourceSansBold
-        valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-        valueLabel.Parent = slider.Frame
-
-        local sliderBg = Instance.new("Frame")
-        sliderBg.Size = UDim2.new(1, 0, 0, 8)
-        sliderBg.Position = UDim2.new(0, 0, 0, 35)
-        sliderBg.BackgroundColor3 = self.Config.ToggleOffColor
-        sliderBg.BorderSizePixel = 0
-        sliderBg.Parent = slider.Frame
-        CreateCorner(4).Parent = sliderBg
-
-        local sliderFill = Instance.new("Frame")
-        sliderFill.Size = UDim2.new((slider.Value - slider.Min)/(slider.Max - slider.Min), 0, 1, 0)
-        sliderFill.BackgroundColor3 = self.Config.HighlightColor
-        sliderFill.BorderSizePixel = 0
-        sliderFill.Parent = sliderBg
-        CreateCorner(4).Parent = sliderFill
-
-        local sliderBtn = Instance.new("TextButton")
-        sliderBtn.Size = UDim2.new(0, 18, 0, 18)
-        sliderBtn.Position = UDim2.new((slider.Value - slider.Min)/(slider.Max - slider.Min), 0, 0.5, 0)
-        sliderBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-        sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        sliderBtn.BorderSizePixel = 0
-        sliderBtn.Text = ""
-        sliderBtn.ZIndex = 10
-        sliderBtn.Parent = sliderBg
-        CreateCorner(9).Parent = sliderBtn
-
-        local dragging = false
-        local function UpdateSlider(input)
-            if not dragging then return end
-            local absSize = sliderBg.AbsoluteSize.X
-            local absPos = sliderBg.AbsolutePosition.X
-            local relativeX = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
-            local rawValue = slider.Min + relativeX * (slider.Max - slider.Min)
-            local steppedValue = math.floor(rawValue / slider.Step + 0.5) * slider.Step
-            steppedValue = math.clamp(steppedValue, slider.Min, slider.Max)
-
-            if steppedValue ~= slider.Value then
-                slider.Value = steppedValue
-                valueLabel.Text = tostring(slider.Value)
-                sliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                sliderBtn.Position = UDim2.new(relativeX, 0, 0.5, 0)
-                slider.Callback(slider.Value)
-            end
-        end
-
-        sliderBtn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
-        end)
-        UserInputService.InputChanged:Connect(UpdateSlider)
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-        end)
-
-        function slider:SetValue(value)
-            value = math.clamp(math.floor(value / slider.Step + 0.5) * slider.Step, slider.Min, slider.Max)
-            slider.Value = value
-            local relativeX = (value - slider.Min)/(slider.Max - slider.Min)
-            valueLabel.Text = tostring(value)
-            sliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-            sliderBtn.Position = UDim2.new(relativeX, 0, 0.5, 0)
-            slider.Callback(value)
-        end
-        function slider:Destroy() slider.Frame:Destroy() end
-
-        table.insert(self.Components, slider)
-        return slider
-    end
-
-    function tab:AddParagraph(config)
-        local paragraph = {}
-        paragraph.Config = config
-
-        paragraph.Frame = Instance.new("Frame")
-        paragraph.Frame.Name = "Paragraph"
-        paragraph.Frame.Size = UDim2.new(1, 0, 0, config.Height or 50)
-        paragraph.Frame.BackgroundTransparency = 1
-        paragraph.Frame.LayoutOrder = #self.Components + 1
-        paragraph.Frame.Parent = self.ContentFrame
-
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(1, 0, 0, 25)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Text = config.Title or ""
-        titleLabel.TextColor3 = self.Config.TextColor
-        titleLabel.TextSize = 18
-        titleLabel.Font = Enum.Font.SourceSansBold
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.Parent = paragraph.Frame
-
-        local descLabel = Instance.new("TextLabel")
-        descLabel.Size = UDim2.new(1, 0, 0, 25)
-        descLabel.Position = UDim2.new(0, 0, 0, 25)
-        descLabel.BackgroundTransparency = 1
-        descLabel.Text = config.Desc or ""
-        descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        descLabel.TextSize = 14
-        descLabel.Font = Enum.Font.SourceSans
-        descLabel.TextWrapped = true
-        descLabel.TextXAlignment = Enum.TextXAlignment.Left
-        descLabel.Parent = paragraph.Frame
-
-        descLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
-            paragraph.Frame.Size = UDim2.new(1, 0, 0, 25 + descLabel.TextBounds.Y)
-        end)
-
-        function paragraph:SetDesc(text) descLabel.Text = text end
-        function paragraph:Destroy() paragraph.Frame:Destroy() end
-
-        table.insert(self.Components, paragraph)
-        return paragraph
-    end
-
-    function tab:AddDivider()
-        local divider = Instance.new("Frame")
-        divider.Name = "Divider"
-        divider.Size = UDim2.new(1, 0, 0, 2)
-        divider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        divider.BackgroundTransparency = 0.5
-        divider.BorderSizePixel = 0
-        divider.LayoutOrder = #self.Components + 1
-        divider.Parent = self.ContentFrame
-
-        local dividerObj = {
-            Frame = divider,
-            Destroy = function() divider:Destroy() end
-        }
-        table.insert(self.Components, dividerObj)
-        return dividerObj
-    end
-
-    return tab
+if not requestsDisabled then
+	if debugX then
+		warn('Querying Settings for Reporter Information')
+	end
+	analyticsLib = loadWithTimeout("https://analytics.sirius.menu/script")
+	if not analyticsLib then
+		warn("Failed to load analytics reporter")
+		analyticsLib = nil
+	elseif analyticsLib and type(analyticsLib.load) == "function" then
+		analyticsLib:load()
+	else
+		warn("Analytics library loaded but missing load function")
+		analyticsLib = nil
+	end
+	sendReport = function(ev_n, sc_n)
+		if not (type(analyticsLib) == "table" and type(analyticsLib.isLoaded) == "function" and analyticsLib:isLoaded()) then
+			warn("Analytics library not loaded")
+			return
+		end
+		if useStudio then
+			print('Sending Analytics')
+		else
+			if debugX then warn('Reporting Analytics') end
+			analyticsLib:report(
+				{
+					["name"] = ev_n,
+					["script"] = {["name"] = sc_n, ["version"] = Release}
+				},
+				{
+					["version"] = InterfaceBuild
+				}
+			)
+			if debugX then warn('Finished Report') end
+		end
+	end
+	if cachedSettings and (#cachedSettings == 0 or (cachedSettings.System and cachedSettings.System.usageAnalytics and cachedSettings.System.usageAnalytics.Value)) then
+		sendReport("execution", "Rayfield")
+	elseif not cachedSettings then
+		sendReport("execution", "Rayfield")
+	end
 end
 
--- 切换选中标签页
-function HaloBoxUI:SelectTab(tab)
-    if self.CurrentTab then
-        self.CurrentTab.ContentFrame.Visible = false
-        self.CurrentTab.Highlight.Visible = false
-    end
-    self.CurrentTab = tab
-    tab.ContentFrame.Visible = true
-    tab.Highlight.Visible = true
+local promptUser = 2
+if promptUser == 1 and prompt and type(prompt.create) == "function" then
+	prompt.create(
+		'Be cautious when running scripts',
+	 [[Please be careful when running scripts from unknown developers. This script has already been ran. <font transparency='0.3'>Some scripts may steal your items or in-game goods.</font>]],
+		'Okay',
+		'',
+		function()
+		end
+	)
 end
 
--- 窗口关闭回调
-function HaloBoxUI:OnClose(callback)
-    self.CloseCallback = callback
+if debugX then
+	warn('Moving on to continue initialisation')
 end
 
--- 销毁UI
-function HaloBoxUI:Destroy()
-    for _, conn in ipairs(self.Connections) do
-        if conn then conn:Disconnect() end
-    end
-    if self.CloseCallback then self.CloseCallback() end
-    self.ScreenGui:Destroy()
-end
-
-return HaloBoxUI
+local RayfieldLibrary = {
+	Flags = {},
+	Theme = {
+		Default = {
+			TextColor = Color3.fromRGB(240, 240, 240),
+			Background = Color3.fromRGB(18, 18, 18),
+			Topbar = Color3.fromRGB(22, 22, 22),
+			Shadow = Color3.fromRGB(10, 10, 10),
+			NotificationBackground = Color3.fromRGB(20, 20, 20),
+			NotificationActionsBackground = Color3.fromRGB(230, 230, 230),
+			TabBackground = Color3.fromRGB(25, 25, 25),
+			TabStroke = Color3.fromRGB(35, 35, 35),
+			TabBackgroundSelected = Color3.fromRGB(30, 30, 30),
+			TabTextColor = Color3.fromRGB(180, 180, 180),
+			SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
+			ElementBackground = Color3.fromRGB(28, 28, 28),
+			ElementBackgroundHover = Color3.fromRGB(35, 35, 35),
+			SecondaryElementBackground = Color3.fromRGB(25, 25, 25),
+			ElementStroke = Color3.fromRGB(40, 40, 40),
+			SecondaryElementStroke = Color3.fromRGB(35, 35, 35),
+			SliderBackground = Color3.fromRGB(30, 30, 30),
+			SliderProgress = Color3.fromRGB(50, 130, 220),
+			SliderStroke = Color3.fromRGB(50, 130, 220),
+			ToggleBackground = Color3.fromRGB(30, 30, 30),
+			ToggleEnabled = Color3.fromRGB(50, 130, 220),
+			ToggleDisabled = Color3.fromRGB(80, 80, 80),
+			ToggleEnabledStroke = Color3.fromRGB(60, 150, 240),
+			ToggleDisabledStroke = Color3.fromRGB(100, 100, 100),
+			ToggleEnabledOuterStroke = Color3.fromRGB(50, 130, 220),
+			ToggleDisabledOuterStroke = Color3.fromRGB(60, 60, 60),
+			DropdownSelected = Color3.fromRGB(35, 
 
