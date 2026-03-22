@@ -10,6 +10,7 @@ local ui = Instance.new("ScreenGui")
 ui.Name = "ui"
 ui.Parent = game.CoreGui
 ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ui.Enabled = false
 
 local lib = {}
 lib.RainbowColorValue = 0
@@ -117,7 +118,7 @@ function lib:Window(text, preset, closebind, background, minicon)
     Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     Main.BorderSizePixel = 0
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Main.Size = UDim2.new(0, 560, 0, 319)
+    Main.Size = UDim2.new(0, 0, 0, 0)
     Main.ClipsDescendants = true
     Main.Visible = true
 
@@ -217,6 +218,12 @@ function lib:Window(text, preset, closebind, background, minicon)
 
     TabFolder.Name = "TabFolder"
     TabFolder.Parent = Main
+
+    local openTween = TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 560, 0, 319)})
+    openTween:Play()
+    openTween.Completed:Connect(function()
+        ui.Enabled = true
+    end)
 
     function lib:ChangePresetColor(toch)
         PresetColor = toch
