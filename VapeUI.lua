@@ -168,11 +168,15 @@ function lib:Window(text, preset, closebind, background, minicon)
     MinimizeButtonFrame.Parent = ui
     MinimizeButtonFrame.IgnoreGuiInset = true
     MinimizeButtonFrame.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    MinimizeButtonFrame.AnchorPoint = Vector2.new(0, 0.5)
+    MinimizeButtonFrame.Position = UDim2.new(0, 10, 0.5, 0)
+    MinimizeButtonFrame.Size = UDim2.new(0, 50, 0, 50)
+    MinimizeButtonFrame.BackgroundTransparency = 1
 
     MinimizeButton.Name = "MinimizeButton"
     MinimizeButton.Parent = MinimizeButtonFrame
     MinimizeButton.AnchorPoint = Vector2.new(0, 0)
-    MinimizeButton.Position = UDim2.new(0, 10, 0, 10)
+    MinimizeButton.Position = UDim2.new(0, 0, 0, 0)
     MinimizeButton.Size = UDim2.new(0, 50, 0, 50)
     MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     MinimizeButton.BackgroundTransparency = 1
@@ -182,6 +186,50 @@ function lib:Window(text, preset, closebind, background, minicon)
 
     MinimizeButtonFrameCorner.CornerRadius = UDim.new(1, 0)
     MinimizeButtonFrameCorner.Parent = MinimizeButton
+
+    local function MakeMinimizableDraggable(dragbutton, frame)
+        local dragging = false
+        local dragInput = nil
+        local dragStart = nil
+        local startPos = nil
+
+        local function update(input)
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+
+        dragbutton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = frame.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        dragbutton.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
+    end
+
+    MakeMinimizableDraggable(MinimizeButton, MinimizeButtonFrame)
 
     local uitoggled = false
     UserInputService.InputBegan:Connect(function(io, p)
@@ -201,6 +249,24 @@ function lib:Window(text, preset, closebind, background, minicon)
             else
                 uitoggled = false
                 ui.Enabled = true
+                if not Main.Visible then
+                    Main.Visible = true
+                    local function resetTransparency(inst)
+                        if inst:IsA("Frame") or inst:IsA("ScrollingFrame") then
+                            inst.BackgroundTransparency = 0
+                        end
+                        if inst:IsA("TextLabel") or inst:IsA("TextButton") then
+                            inst.TextTransparency = 0
+                        end
+                        if inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
+                            inst.ImageTransparency = 0
+                        end
+                        for _, child in ipairs(inst:GetChildren()) do
+                            resetTransparency(child)
+                        end
+                    end
+                    resetTransparency(Main)
+                end
                 Main:TweenSize(
                     UDim2.new(0, 560, 0, 319),
                     Enum.EasingDirection.Out,
@@ -212,23 +278,79 @@ function lib:Window(text, preset, closebind, background, minicon)
         end
     end)
 
+    local animating = false
     MinimizeButton.MouseButton1Click:Connect(function()
-        if not isMinimized then
-            Main:TweenSize(UDim2.new(0, 560, 0, 41), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .4, true)
-            for _, child in ipairs(Main:GetChildren()) do
-                if child ~= DragFrame and child ~= Title and child ~= BackgroundImage then
-                    child.Visible = false
+        if animating then return end
+        animating = true
+
+        local function getTransparencyTweens(obj, targetTrans)
+            local tweens = {}
+            local function process(instance)
+                if instance:IsA("Frame") or instance:IsA("ScrollingFrame") then
+                    local tween = TweenService:Create(instance, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = targetTrans})
+                    table.insert(tweens, tween)
+                end
+                if instance:IsA("TextLabel") or instance:IsA("TextButton") then
+                    local tween = TweenService:Create(instance, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = targetTrans})
+                    table.insert(tweens, tween)
+                end
+                if instance:IsA("ImageLabel") or instance:IsA("ImageButton") then
+                    local tween = TweenService:Create(instance, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = targetTrans})
+                    table.insert(tweens, tween)
+                end
+                for _, child in ipairs(instance:GetChildren()) do
+                    process(child)
                 end
             end
-            isMinimized = true
+            process(obj)
+            return tweens
+        end
+
+        if Main.Visible then
+            local tweens = getTransparencyTweens(Main, 1)
+            local tweenBG = TweenService:Create(BackgroundImage, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1})
+            table.insert(tweens, tweenBG)
+            for _, t in ipairs(tweens) do
+                t:Play()
+            end
+            local done = 0
+            local total = #tweens
+            if total == 0 then
+                Main.Visible = false
+                animating = false
+            else
+                for _, t in ipairs(tweens) do
+                    t.Completed:Connect(function()
+                        done = done + 1
+                        if done == total then
+                            Main.Visible = false
+                            animating = false
+                        end
+                    end)
+                end
+            end
         else
-            Main:TweenSize(UDim2.new(0, 560, 0, 319), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .4, true)
-            for _, child in ipairs(Main:GetChildren()) do
-                if child ~= DragFrame and child ~= Title and child ~= BackgroundImage then
-                    child.Visible = true
+            Main.Visible = true
+            local tweens = getTransparencyTweens(Main, 0)
+            local tweenBG = TweenService:Create(BackgroundImage, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0})
+            table.insert(tweens, tweenBG)
+            for _, t in ipairs(tweens) do
+                t:Play()
+            end
+            local done = 0
+            local total = #tweens
+            if total == 0 then
+                animating = false
+            else
+                for _, t in ipairs(tweens) do
+                    t.Completed:Connect(function()
+                        done = done + 1
+                        if done == total then
+                            animating = false
+                        end
+                    end)
                 end
             end
-            isMinimized = false
         end
     end)
 
