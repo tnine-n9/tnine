@@ -96,7 +96,7 @@ local function LoadImageFromUrl(url)
     return url
 end
 
-function lib:Window(text, preset, closebind, background)
+function lib:Window(text, preset, closebind, background, minicon)
     CloseBind = closebind or Enum.KeyCode.RightControl
     PresetColor = preset or Color3.fromRGB(44, 120, 224)
     local fs = false
@@ -108,7 +108,9 @@ function lib:Window(text, preset, closebind, background)
     local TabFolder = Instance.new("Folder")
     local DragFrame = Instance.new("Frame")
     local BackgroundImage = Instance.new("ImageLabel")
+    local MinimizeButtonFrame = Instance.new("ScreenGui")
     local MinimizeButton = Instance.new("ImageButton")
+    local MinimizeButtonFrameCorner = Instance.new("UICorner")
 
     Main.Name = "Main"
     Main.Parent = ui
@@ -158,18 +160,28 @@ function lib:Window(text, preset, closebind, background)
     DragFrame.BackgroundTransparency = 1.000
     DragFrame.Size = UDim2.new(0, 560, 0, 41)
 
-    MinimizeButton.Name = "MinimizeButton"
-    MinimizeButton.Parent = DragFrame
-    MinimizeButton.AnchorPoint = Vector2.new(1, 0.5)
-    MinimizeButton.Position = UDim2.new(1, -10, 0.5, 0)
-    MinimizeButton.Size = UDim2.new(0, 24, 0, 24)
-    MinimizeButton.BackgroundTransparency = 1
-    MinimizeButton.Image = LoadImageFromUrl("https://chaton-images.s3.us-east-2.amazonaws.com/TDuh6pLcLaL5Njc9edXjuNvt9uxhglfns6fEqhsldY0SDHl4oLdsFqqbzKfNG2Mf_2048x2048x1346681.png")
-    MinimizeButton.ImageColor3 = Color3.fromRGB(200, 200, 200)
-
     Main:TweenSize(UDim2.new(0, 560, 0, 319), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 
     MakeDraggable(DragFrame, Main)
+
+    MinimizeButtonFrame.Name = "MinimizeButtonFrame"
+    MinimizeButtonFrame.Parent = ui
+    MinimizeButtonFrame.IgnoreGuiInset = true
+    MinimizeButtonFrame.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Parent = MinimizeButtonFrame
+    MinimizeButton.AnchorPoint = Vector2.new(0, 0)
+    MinimizeButton.Position = UDim2.new(0, 10, 0, 10)
+    MinimizeButton.Size = UDim2.new(0, 50, 0, 50)
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    MinimizeButton.BackgroundTransparency = 1
+    MinimizeButton.Image = LoadImageFromUrl(minicon or "https://chaton-images.s3.us-east-2.amazonaws.com/TDuh6pLcLaL5Njc9edXjuNvt9uxhglfns6fEqhsldY0SDHl4oLdsFqqbzKfNG2Mf_2048x2048x1346681.png")
+    MinimizeButton.ImageColor3 = Color3.fromRGB(200, 200, 200)
+    MinimizeButton.ScaleType = Enum.ScaleType.Fit
+
+    MinimizeButtonFrameCorner.CornerRadius = UDim.new(1, 0)
+    MinimizeButtonFrameCorner.Parent = MinimizeButton
 
     local uitoggled = false
     UserInputService.InputBegan:Connect(function(io, p)
@@ -203,9 +215,19 @@ function lib:Window(text, preset, closebind, background)
     MinimizeButton.MouseButton1Click:Connect(function()
         if not isMinimized then
             Main:TweenSize(UDim2.new(0, 560, 0, 41), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .4, true)
+            for _, child in ipairs(Main:GetChildren()) do
+                if child ~= DragFrame and child ~= Title and child ~= BackgroundImage then
+                    child.Visible = false
+                end
+            end
             isMinimized = true
         else
             Main:TweenSize(UDim2.new(0, 560, 0, 319), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .4, true)
+            for _, child in ipairs(Main:GetChildren()) do
+                if child ~= DragFrame and child ~= Title and child ~= BackgroundImage then
+                    child.Visible = true
+                end
+            end
             isMinimized = false
         end
     end)
