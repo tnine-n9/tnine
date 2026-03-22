@@ -96,45 +96,10 @@ local function LoadImageFromUrl(url)
     return url
 end
 
-local function setChildrenTransparency(parent, targetTransparency, duration)
-    local tweens = {}
-    local function apply(instance)
-        local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        if instance:IsA("TextLabel") or instance:IsA("TextButton") then
-            local tween = TweenService:Create(instance, tweenInfo, {TextTransparency = targetTransparency})
-            table.insert(tweens, tween)
-            tween:Play()
-        end
-        if instance:IsA("ImageLabel") then
-            local tween = TweenService:Create(instance, tweenInfo, {ImageTransparency = targetTransparency})
-            table.insert(tweens, tween)
-            tween:Play()
-        end
-        if instance:IsA("Frame") or instance:IsA("ScrollingFrame") or instance:IsA("TextButton") then
-            local tween = TweenService:Create(instance, tweenInfo, {BackgroundTransparency = targetTransparency})
-            table.insert(tweens, tween)
-            tween:Play()
-        end
-        if instance:IsA("ImageButton") then
-            local tween = TweenService:Create(instance, tweenInfo, {ImageTransparency = targetTransparency})
-            table.insert(tweens, tween)
-            tween:Play()
-        end
-        for _, child in ipairs(instance:GetChildren()) do
-            apply(child)
-        end
-    end
-    apply(parent)
-    return tweens
-end
-
 function lib:Window(text, preset, closebind, background, minicon)
     CloseBind = closebind or Enum.KeyCode.RightControl
     PresetColor = preset or Color3.fromRGB(44, 120, 224)
     local fs = false
-    local isMinimized = false
-    local windowVisible = true
-    local animating = false
     local Main = Instance.new("Frame")
     local TabHold = Instance.new("Frame")
     local TabHoldLayout = Instance.new("UIListLayout")
@@ -247,22 +212,7 @@ function lib:Window(text, preset, closebind, background, minicon)
     end)
 
     MinimizeButton.MouseButton1Click:Connect(function()
-        if animating then return end
-        if windowVisible then
-            animating = true
-            local tweens = setChildrenTransparency(Main, 1, 0.3)
-            wait(0.3)
-            Main.Visible = false
-            windowVisible = false
-            animating = false
-        else
-            animating = true
-            Main.Visible = true
-            setChildrenTransparency(Main, 0, 0.3)
-            wait(0.3)
-            windowVisible = true
-            animating = false
-        end
+        Main.Visible = not Main.Visible
     end)
 
     TabFolder.Name = "TabFolder"
