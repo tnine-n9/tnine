@@ -1,6 +1,4 @@
-local repo = 'https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/'
-local Library1 = loadstring(game:HttpGet("https://raw.githubusercontent.com/tnine-n9/n9/refs/heads/main/%E4%BA%8C%E6%94%B9Library.lua"))()
-local Library = local cloneref = (cloneref or clonereference or function(instance: any)
+local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
 local CoreGui: CoreGui = cloneref(game:GetService("CoreGui"))
@@ -31,11 +29,19 @@ local Options = {}
 local Tooltips = {}
 
 local function GetNotoFont()
-    local Ok, FontObj = pcall(Font.fromName, "Noto Sans SC")
-    if Ok then
+    local Ok, FontObj = pcall(function()
+        return Font.fromName("Noto Sans SC")
+    end)
+    if Ok and FontObj then
         return FontObj
     end
-    return Font.fromEnum(Enum.Font.Gotham)
+    local Ok2, FontObj2 = pcall(function()
+        return Font.fromEnum(Enum.Font.Gotham)
+    end)
+    if Ok2 and FontObj2 then
+        return FontObj2
+    end
+    return Enum.Font.Gotham
 end
 
 local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
@@ -6052,7 +6058,12 @@ end
 
 function Library:SetFont(FontFace)
     if typeof(FontFace) == "EnumItem" then
-        FontFace = Font.fromEnum(FontFace)
+        local Ok, Result = pcall(function()
+            return Font.fromEnum(FontFace)
+        end)
+        if Ok and Result then
+            FontFace = Result
+        end
     end
 
     Library.Scheme.Font = FontFace
@@ -6407,7 +6418,12 @@ function Library:CreateWindow(WindowInfo)
         math.clamp(WindowInfo.Size.Y.Offset, Library.MinSize.Y, MaxY)
     )
     if typeof(WindowInfo.Font) == "EnumItem" then
-        WindowInfo.Font = Font.fromEnum(WindowInfo.Font)
+        local Ok, Result = pcall(function()
+            return Font.fromEnum(WindowInfo.Font)
+        end)
+        if Ok and Result then
+            WindowInfo.Font = Result
+        end
     end
     WindowInfo.CornerRadius = math.min(WindowInfo.CornerRadius, 32)
     
@@ -9455,224 +9471,3 @@ Library:GiveSignal(Teams.ChildRemoved:Connect(OnTeamChange))
 
 getgenv().Library = Library
 return Library
-
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-local Options = Library.Options
-
-Library.ShowToggleFrameInKeybinds = true
-Library.ShowCustomCursor = true
-Library.NotifySide = "Left"
-
-local Window = Library:CreateWindow({
-    Title = 'Zero X',
-    Footer = "ZeroX | Version:1.0 | PP TEAM",
-    --BackgroundImage = "https://chaton-images.s3.us-east-2.amazonaws.com/x8d62rDCOKRfl3uiqr7DCeMANNh8FnxK7x630a8kSIImdz5nJD0H6MWYtQZkavuA_2731x1536x925612.png",
-    --BackgroundImageTransparency = 0.1,
-    CornerRadius = 16,
-    Center = true,
-    AutoShow = true,
-    Resizable = true,
-    ShowCustomCursor = true,
-    UnlockMouseWhileOpen = true,
-    NotifySide = "Left",
-    TabPadding = 8,
-    MenuFadeTime = 0.2
-})
-
-local Tabs = {
-    Main = Window:AddTab("主要控件", "info"),
-    ['UI Settings'] = Window:AddTab('UI Settings')
-}
-
-local LeftGroup = Tabs.Main:AddLeftGroupbox("常用控件示例")
-local RightGroup = Tabs.Main:AddRightGroupbox("高级/特殊控件")
-
-LeftGroup:AddLabel('这是一个普通文本标签')
-LeftGroup:AddLabel('这是一个带颜色的标签', true)
-
-LeftGroup:AddToggle('MyToggle', {
-    Text = '普通开关',
-    Default = false,
-    Tooltip = '鼠标悬停提示：这是一个开关',
-    Callback = function(Value)
-        print('[回调] 开关状态改变:', Value)
-    end
-})
-
-LeftGroup:AddToggle('ToggleWithColor', {
-    Text = '开关 + 颜色选择',
-    Default = true,
-}):AddColorPicker('MyColorPicker', {
-    Default = Color3.fromRGB(255, 0, 0),
-    Title = '颜色设置', 
-    Transparency = 0, 
-    Callback = function(Value)
-        print('[回调] 颜色改变:', Value)
-    end
-})
-
-LeftGroup:AddButton({
-    Text = '普通按钮',
-    Func = function()
-        Library:Notify("你点击了按钮！", 3)
-        print('按钮被点击')
-    end,
-    DoubleClick = false,
-})
-
-LeftGroup:AddButton({
-    Text = '主按钮',
-    Func = function() print('主按钮点击') end,
-}):AddButton({
-    Text = '子按钮',
-    Func = function() print('子按钮点击') end,
-})
-
-LeftGroup:AddSlider('MyIntSlider', {
-    Text = '整数滑条',
-    Default = 50,
-    Min = 0,
-    Max = 100,
-    Rounding = 0,
-    Suffix = " %",
-    Compact = false, 
-    Callback = function(Value)
-        print('[回调] 滑条值:', Value)
-    end
-})
-
-LeftGroup:AddSlider('MyFloatSlider', {
-    Text = '小数滑条',
-    Default = 0.5,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    Callback = function(Value)
-        print('[回调] 小数值:', Value)
-    end
-})
-
-RightGroup:AddInput('MyInput', {
-    Default = '默认内容',
-    Numeric = false,
-    Finished = true,
-    Text = '文本输入框',
-    Placeholder = '请输入...', 
-    Callback = function(Value)
-        print('[回调] 输入内容:', Value)
-    end
-})
-
-RightGroup:AddDropdown('MyDropdown', {
-    Values = { '选项 A', '选项 B', '选项 C' },
-    Default = 1, 
-    Multi = false,
-    Text = '单选下拉框',
-    Callback = function(Value)
-        print('[回调] 选中:', Value)
-    end
-})
-
-RightGroup:AddDropdown('MyMultiDropdown', {
-    Values = { '苹果', '香蕉', '橘子' },
-    Default = 1, 
-    Multi = true,
-    Text = '多选下拉框',
-    Tooltip = '可以选择多个',
-    Callback = function(Value)
-        print('[回调] 多选表:', Value)
-    end
-})
-
-RightGroup:AddDropdown('PlayerList', {
-    SpecialType = 'Player',
-    Text = '玩家列表',
-    Tooltip = '自动获取当前服务器玩家',
-    Callback = function(Value)
-        print('[回调] 选中玩家:', Value)
-    end
-})
-
-RightGroup:AddLabel('按键绑定'):AddKeyPicker('MyKeybind', {
-    Default = 'RightAlt', 
-    SyncToggleState = false, 
-    Mode = 'Toggle',
-    Text = '功能热键', 
-    NoUI = false, 
-    Callback = function(Value)
-        print('[回调] 按键触发:', Value)
-    end
-})
-
-RightGroup:AddLabel('独立颜色选择器'):AddColorPicker('StandaloneColor', {
-    Default = Color3.fromRGB(0, 255, 128),
-    Title = '自定义颜色', 
-    Callback = function(Value)
-        print('[回调] 颜色:', Value)
-    end
-})
-
-local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
-MenuGroup:AddToggle("KeybindMenuOpen", {
-    Default = Library.KeybindFrame.Visible,
-    Text = "Open Keybind Menu",
-    Callback = function(value) Library.KeybindFrame.Visible = value end
-})
-MenuGroup:AddToggle("ShowCustomCursor", {
-    Text = "Custom Cursor",
-    Default = true,
-    Callback = function(Value) Library.ShowCustomCursor = Value end
-})
-MenuGroup:AddDivider()
-MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", {
-    Default = "RightShift",
-    NoUI = true,
-    Text = "Menu keybind"
-})
-MenuGroup:AddButton("Unload", function() Library:Unload() end)
-
-Library.ToggleKeybind = Options.MenuKeybind
-
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
-
-ThemeManager:SetFolder('MyScriptHub')
-SaveManager:SetFolder('MyScriptHub/specific-game')
-SaveManager:SetSubFolder('specific-place')
-
-SaveManager:BuildConfigSection(Tabs['UI Settings'])
-ThemeManager:ApplyToTab(Tabs['UI Settings'])
-SaveManager:LoadAutoloadConfig()
-
-Library:SetWatermarkVisibility(true)
-local FrameTimer = tick()
-local FrameCounter = 0
-local FPS = 60
-local GetPing = (function() return math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue()) end)
-local CanDoPing = pcall(function() return GetPing() end)
-
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter = FrameCounter + 1
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter
-        FrameTimer = tick()
-        FrameCounter = 0
-    end
-    if CanDoPing then
-        Library:SetWatermark(("%s | %d fps | %d ms"):format(game.Players.LocalPlayer.Name, math.floor(FPS), GetPing()))
-    else
-        Library:SetWatermark(("%s | %d fps"):format(game.Players.LocalPlayer.Name, math.floor(FPS)))
-    end
-end)
-
-Library:OnUnload(function()
-    WatermarkConnection:Disconnect()
-    if ESPManager then
-        ESPManager:SetEnabled(false)
-    end
-    print('hello world')
-end)
