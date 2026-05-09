@@ -29,11 +29,21 @@ local Options = {}
 local Tooltips = {}
 
 local function GetNotoFont()
-    local Ok, FontObj = pcall(Font.fromName, "Noto Sans SC")
-    if Ok then
+    local Ok, FontObj = pcall(function()
+        return Font.fromName("Noto Sans SC")
+    end)
+    if Ok and FontObj then
         return FontObj
     end
-    return Font.fromEnum(Enum.Font.Gotham)
+    -- Fallback: use pcall for Font.fromEnum too (some executors lack Font API)
+    local Ok2, FontObj2 = pcall(function()
+        return Font.fromEnum(Enum.Font.Gotham)
+    end)
+    if Ok2 and FontObj2 then
+        return FontObj2
+    end
+    -- Ultimate fallback
+    return Enum.Font.Gotham
 end
 
 local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
@@ -6406,7 +6416,12 @@ end
 
 function Library:SetFont(FontFace)
     if typeof(FontFace) == "EnumItem" then
-        FontFace = Font.fromEnum(FontFace)
+        local Ok, Result = pcall(function()
+            return Font.fromEnum(FontFace)
+        end)
+        if Ok and Result then
+            FontFace = Result
+        end
     end
 
     Library.Scheme.Font = FontFace
@@ -6761,7 +6776,12 @@ function Library:CreateWindow(WindowInfo)
         math.clamp(WindowInfo.Size.Y.Offset, Library.MinSize.Y, MaxY)
     )
     if typeof(WindowInfo.Font) == "EnumItem" then
-        WindowInfo.Font = Font.fromEnum(WindowInfo.Font)
+        local Ok, Result = pcall(function()
+            return Font.fromEnum(WindowInfo.Font)
+        end)
+        if Ok and Result then
+            WindowInfo.Font = Result
+        end
     end
     WindowInfo.CornerRadius = math.min(WindowInfo.CornerRadius, 32)
     
