@@ -28,22 +28,12 @@ local Toggles = {}
 local Options = {}
 local Tooltips = {}
 
-local function GetPixelFont()
-    -- Pixel Cyberpunk Style Font
-    -- Use Roblox built-in monospace font for pixel/terminal feel
-    local Ok, FontObj = pcall(Font.fromEnum, Enum.Font.Code)
+local function GetNotoFont()
+    local Ok, FontObj = pcall(Font.fromName, "Noto Sans SC")
     if Ok then
         return FontObj
     end
-    -- Fallback chain
-    local Fallbacks = {Enum.Font.GothamBold, Enum.Font.SourceSansBold, Enum.Font.Gotham}
-    for _, Fallback in ipairs(Fallbacks) do
-        local Ok2, FontObj2 = pcall(Font.fromEnum, Fallback)
-        if Ok2 then
-            return FontObj2
-        end
-    end
-    return Font.fromEnum(Enum.Font.SourceSans)
+    return Font.fromEnum(Enum.Font.Gotham)
 end
 
 local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
@@ -248,7 +238,7 @@ local Library = {
         AccentColor = Color3.fromRGB(200, 50, 255)  -- CARTOON: bright neon purple,
         OutlineColor = Color3.fromRGB(60, 60, 60)  -- CARTOON: visible gray outline,
         FontColor = Color3.new(1, 1, 1),
-        Font = GetPixelFont(),
+        Font = GetNotoFont(),
 
         RedColor = Color3.fromRGB(255, 51, 51),
         DestructiveColor = Color3.fromRGB(220, 38, 38),
@@ -340,7 +330,7 @@ local Templates = {
         CornerRadius = 0,  -- PIXEL STYLE: sharp edges
         NotifySide = "Right",
         ShowCustomCursor = true,
-        Font = GetPixelFont(),
+        Font = GetNotoFont(),
         BackgroundImage = "",
         ToggleKeybind = Enum.KeyCode.RightControl,
         
