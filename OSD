@@ -1286,345 +1286,345 @@ ParentUI(ScreenGui)
 
 Library.ScreenGui = ScreenGui
 
---// CARTOON PIXEL DECORATION OVERLAY
-local CartoonOverlay = New("Frame", {
-    Name = "CartoonOverlay",
-    BackgroundTransparency = 1,
-    Size = UDim2.fromScale(1, 1),
-    ZIndex = 9998,
-    Parent = ScreenGui,
-})
-
--- Cartoon pixel stars decoration (top-left corner)
-local PixelStars = New("Frame", {
-    Name = "PixelStars",
-    BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(8, 8),
-    Size = UDim2.fromOffset(80, 80),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Star 1
-New("Frame", {
-    BackgroundColor3 = Library.Scheme.AccentColor,
-    BackgroundTransparency = 0.6,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(4, 4),
-    Size = UDim2.fromOffset(6, 6),
-    ZIndex = 9998,
-    Parent = PixelStars,
-})
-
--- Star 2
-New("Frame", {
-    BackgroundColor3 = Color3.fromRGB(255, 255, 0),
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(24, 16),
-    Size = UDim2.fromOffset(4, 4),
-    ZIndex = 9998,
-    Parent = PixelStars,
-})
-
--- Star 3
-New("Frame", {
-    BackgroundColor3 = Library.Scheme.AccentColor,
-    BackgroundTransparency = 0.7,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(12, 32),
-    Size = UDim2.fromOffset(5, 5),
-    ZIndex = 9998,
-    Parent = PixelStars,
-})
-
--- Star 4 (cyan)
-New("Frame", {
-    BackgroundColor3 = Color3.fromRGB(0, 255, 255),
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(40, 8),
-    Size = UDim2.fromOffset(4, 4),
-    ZIndex = 9998,
-    Parent = PixelStars,
-})
-
--- Cartoon pixel blocks decoration (bottom-right)
-local PixelBlocks = New("Frame", {
-    Name = "PixelBlocks",
-    AnchorPoint = Vector2.new(1, 1),
-    BackgroundTransparency = 1,
-    Position = UDim2.new(1, -8, 1, -8),
-    Size = UDim2.fromOffset(100, 60),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Block 1 (purple)
-New("Frame", {
-    BackgroundColor3 = Library.Scheme.AccentColor,
-    BackgroundTransparency = 0.4,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(60, 20),
-    Size = UDim2.fromOffset(12, 12),
-    ZIndex = 9998,
-    Parent = PixelBlocks,
-})
-
--- Block 2 (green)
-New("Frame", {
-    BackgroundColor3 = Color3.fromRGB(0, 255, 100),
-    BackgroundTransparency = 0.4,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(40, 36),
-    Size = UDim2.fromOffset(8, 8),
-    ZIndex = 9998,
-    Parent = PixelBlocks,
-})
-
--- Block 3 (pink)
-New("Frame", {
-    BackgroundColor3 = Color3.fromRGB(255, 100, 200),
-    BackgroundTransparency = 0.4,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(76, 8),
-    Size = UDim2.fromOffset(10, 10),
-    ZIndex = 9998,
-    Parent = PixelBlocks,
-})
-
--- Block 4 (orange)
-New("Frame", {
-    BackgroundColor3 = Color3.fromRGB(255, 150, 0),
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(20, 16),
-    Size = UDim2.fromOffset(6, 6),
-    ZIndex = 9998,
-    Parent = PixelBlocks,
-})
-
--- Cartoon pixel cross decoration (top-right)
-local PixelCross = New("Frame", {
-    Name = "PixelCross",
-    AnchorPoint = Vector2.new(1, 0),
-    BackgroundTransparency = 1,
-    Position = UDim2.new(1, -8, 0, 8),
-    Size = UDim2.fromOffset(60, 60),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Cross horizontal
-New("Frame", {
-    BackgroundColor3 = Library.Scheme.AccentColor,
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(10, 22),
-    Size = UDim2.fromOffset(28, 6),
-    ZIndex = 9998,
-    Parent = PixelCross,
-})
-
--- Cross vertical
-New("Frame", {
-    BackgroundColor3 = Library.Scheme.AccentColor,
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0,
-    Position = UDim2.fromOffset(21, 10),
-    Size = UDim2.fromOffset(6, 28),
-    ZIndex = 9998,
-    Parent = PixelCross,
-})
-
--- Pixel heart decoration (bottom-left)
-local PixelHeart = New("Frame", {
-    Name = "PixelHeart",
-    AnchorPoint = Vector2.new(0, 1),
-    BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(8, 1, -8),
-    Size = UDim2.fromOffset(50, 50),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Heart pixels (8-bit heart shape)
-local HeartPixels = {
-    {0, 1, 1, 0, 1, 1, 0},
-    {1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1},
-    {0, 1, 1, 1, 1, 1, 0},
-    {0, 0, 1, 1, 1, 0, 0},
-    {0, 0, 0, 1, 0, 0, 0},
-}
-for Row, Pixels in ipairs(HeartPixels) do
-    for Col, Pixel in ipairs(Pixels) do
-        if Pixel == 1 then
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(255, 50, 100),
-                BackgroundTransparency = 0.4,
-                BorderSizePixel = 0,
-                Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
-                Size = UDim2.fromOffset(5, 5),
-                ZIndex = 9998,
-                Parent = PixelHeart,
-            })
-        end
-    end
-end
-
--- Pixel cloud decoration (top center)
-local PixelCloud = New("Frame", {
-    Name = "PixelCloud",
-    AnchorPoint = Vector2.new(0.5, 0),
-    BackgroundTransparency = 1,
-    Position = UDim2.fromScale(0.5, 12),
-    Size = UDim2.fromOffset(70, 30),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Cloud pixels
-local CloudPixels = {
-    {0,1,1,1,0},
-    {1,1,1,1,1},
-    {1,1,1,1,1},
-    {0,1,1,1,0},
-}
-for Row, Pixels in ipairs(CloudPixels) do
-    for Col, Pixel in ipairs(Pixels) do
-        if Pixel == 1 then
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(120, 120, 140),
-                BackgroundTransparency = 0.6,
-                BorderSizePixel = 0,
-                Position = UDim2.fromOffset((Col-1)*6, (Row-1)*6),
-                Size = UDim2.fromOffset(6, 6),
-                ZIndex = 9998,
-                Parent = PixelCloud,
-            })
-        end
-    end
-end
-
--- Pixel lightning bolt (right side)
-local PixelLightning = New("Frame", {
-    Name = "PixelLightning",
-    AnchorPoint = Vector2.new(1, 0.5),
-    BackgroundTransparency = 1,
-    Position = UDim2.new(1, -20, 0.5, 0),
-    Size = UDim2.fromOffset(20, 40),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Lightning pixels
-local LightningPixels = {
-    {0,0,1,0},
-    {0,1,1,0},
-    {0,1,0,0},
-    {1,1,0,0},
-    {1,1,0,0},
-    {0,1,1,0},
-    {0,0,1,0},
-}
-for Row, Pixels in ipairs(LightningPixels) do
-    for Col, Pixel in ipairs(Pixels) do
-        if Pixel == 1 then
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(255, 255, 0),
-                BackgroundTransparency = 0.4,
-                BorderSizePixel = 0,
-                Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
-                Size = UDim2.fromOffset(5, 5),
-                ZIndex = 9998,
-                Parent = PixelLightning,
-            })
-        end
-    end
-end
-
--- Pixel diamond (left side middle)
-local PixelDiamond = New("Frame", {
-    Name = "PixelDiamond",
-    BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(20, 0.4),
-    Size = UDim2.fromOffset(24, 24),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Diamond pixels
-local DiamondPixels = {
-    {0,0,1,0,0},
-    {0,1,1,1,0},
-    {1,1,1,1,1},
-    {0,1,1,1,0},
-    {0,0,1,0,0},
-}
-for Row, Pixels in ipairs(DiamondPixels) do
-    for Col, Pixel in ipairs(Pixels) do
-        if Pixel == 1 then
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(0, 255, 255),
-                BackgroundTransparency = 0.4,
-                BorderSizePixel = 0,
-                Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
-                Size = UDim2.fromOffset(5, 5),
-                ZIndex = 9998,
-                Parent = PixelDiamond,
-            })
-        end
-    end
-end
-
--- Floating pixel sprites (small animated-looking dots)
-local PixelSprites = New("Frame", {
-    Name = "PixelSprites",
-    BackgroundTransparency = 1,
-    Size = UDim2.fromScale(1, 1),
-    ZIndex = 9998,
-    Parent = CartoonOverlay,
-})
-
--- Random colorful pixel dots scattered around
-local SpritePositions = {
-    {0.15, 0.08, Color3.fromRGB(255, 0, 100), 5},
-    {0.85, 0.12, Color3.fromRGB(0, 255, 150), 4},
-    {0.08, 0.45, Color3.fromRGB(255, 200, 0), 6},
-    {0.92, 0.55, Color3.fromRGB(200, 0, 255), 5},
-    {0.2, 0.88, Color3.fromRGB(0, 200, 255), 4},
-    {0.78, 0.82, Color3.fromRGB(255, 100, 0), 6},
-    {0.5, 0.05, Color3.fromRGB(100, 255, 100), 4},
-    {0.35, 0.95, Color3.fromRGB(255, 50, 200), 5},
-}
-for _, Sprite in ipairs(SpritePositions) do
-    New("Frame", {
-        BackgroundColor3 = Sprite[3],
-        BackgroundTransparency = 0.45,
-        BorderSizePixel = 0,
-        Position = UDim2.fromScale(Sprite[1], Sprite[2]),
-        Size = UDim2.fromOffset(Sprite[4], Sprite[4]),
-        ZIndex = 9998,
-        Parent = PixelSprites,
-    })
-end
-
--- Subtle scanlines (kept but less transparent)
-local Scanlines = New("ImageLabel", {
-    Name = "Scanlines",
-    BackgroundTransparency = 1,
-    Image = "rbxassetid://13583392678",
-    ImageColor3 = Color3.new(0, 0, 0),
-    ImageTransparency = 0.85,
-    ScaleType = Enum.ScaleType.Tile,
-    TileSize = UDim2.fromOffset(1, 4),
-    Size = UDim2.fromScale(1, 1),
-    ZIndex = 9997,
-    Parent = CartoonOverlay,
-})
-
-Library.CartoonOverlay = CartoonOverlay
+-- DISABLED: --// CARTOON PIXEL DECORATION OVERLAY
+-- DISABLED: local CartoonOverlay = New("Frame", {
+-- DISABLED:     Name = "CartoonOverlay",
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Size = UDim2.fromScale(1, 1),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = ScreenGui,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cartoon pixel stars decoration (top-left corner)
+-- DISABLED: local PixelStars = New("Frame", {
+-- DISABLED:     Name = "PixelStars",
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.fromOffset(8, 8),
+-- DISABLED:     Size = UDim2.fromOffset(80, 80),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Star 1
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Library.Scheme.AccentColor,
+-- DISABLED:     BackgroundTransparency = 0.6,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(4, 4),
+-- DISABLED:     Size = UDim2.fromOffset(6, 6),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelStars,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Star 2
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Color3.fromRGB(255, 255, 0),
+-- DISABLED:     BackgroundTransparency = 0.5,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(24, 16),
+-- DISABLED:     Size = UDim2.fromOffset(4, 4),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelStars,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Star 3
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Library.Scheme.AccentColor,
+-- DISABLED:     BackgroundTransparency = 0.7,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(12, 32),
+-- DISABLED:     Size = UDim2.fromOffset(5, 5),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelStars,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Star 4 (cyan)
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Color3.fromRGB(0, 255, 255),
+-- DISABLED:     BackgroundTransparency = 0.5,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(40, 8),
+-- DISABLED:     Size = UDim2.fromOffset(4, 4),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelStars,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cartoon pixel blocks decoration (bottom-right)
+-- DISABLED: local PixelBlocks = New("Frame", {
+-- DISABLED:     Name = "PixelBlocks",
+-- DISABLED:     AnchorPoint = Vector2.new(1, 1),
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.new(1, -8, 1, -8),
+-- DISABLED:     Size = UDim2.fromOffset(100, 60),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Block 1 (purple)
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Library.Scheme.AccentColor,
+-- DISABLED:     BackgroundTransparency = 0.4,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(60, 20),
+-- DISABLED:     Size = UDim2.fromOffset(12, 12),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelBlocks,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Block 2 (green)
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Color3.fromRGB(0, 255, 100),
+-- DISABLED:     BackgroundTransparency = 0.4,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(40, 36),
+-- DISABLED:     Size = UDim2.fromOffset(8, 8),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelBlocks,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Block 3 (pink)
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Color3.fromRGB(255, 100, 200),
+-- DISABLED:     BackgroundTransparency = 0.4,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(76, 8),
+-- DISABLED:     Size = UDim2.fromOffset(10, 10),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelBlocks,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Block 4 (orange)
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Color3.fromRGB(255, 150, 0),
+-- DISABLED:     BackgroundTransparency = 0.5,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(20, 16),
+-- DISABLED:     Size = UDim2.fromOffset(6, 6),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelBlocks,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cartoon pixel cross decoration (top-right)
+-- DISABLED: local PixelCross = New("Frame", {
+-- DISABLED:     Name = "PixelCross",
+-- DISABLED:     AnchorPoint = Vector2.new(1, 0),
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.new(1, -8, 0, 8),
+-- DISABLED:     Size = UDim2.fromOffset(60, 60),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cross horizontal
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Library.Scheme.AccentColor,
+-- DISABLED:     BackgroundTransparency = 0.5,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(10, 22),
+-- DISABLED:     Size = UDim2.fromOffset(28, 6),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelCross,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cross vertical
+-- DISABLED: New("Frame", {
+-- DISABLED:     BackgroundColor3 = Library.Scheme.AccentColor,
+-- DISABLED:     BackgroundTransparency = 0.5,
+-- DISABLED:     BorderSizePixel = 0,
+-- DISABLED:     Position = UDim2.fromOffset(21, 10),
+-- DISABLED:     Size = UDim2.fromOffset(6, 28),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = PixelCross,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Pixel heart decoration (bottom-left)
+-- DISABLED: local PixelHeart = New("Frame", {
+-- DISABLED:     Name = "PixelHeart",
+-- DISABLED:     AnchorPoint = Vector2.new(0, 1),
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.fromOffset(8, 1, -8),
+-- DISABLED:     Size = UDim2.fromOffset(50, 50),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Heart pixels (8-bit heart shape)
+-- DISABLED: local HeartPixels = {
+-- DISABLED:     {0, 1, 1, 0, 1, 1, 0},
+-- DISABLED:     {1, 1, 1, 1, 1, 1, 1},
+-- DISABLED:     {1, 1, 1, 1, 1, 1, 1},
+-- DISABLED:     {0, 1, 1, 1, 1, 1, 0},
+-- DISABLED:     {0, 0, 1, 1, 1, 0, 0},
+-- DISABLED:     {0, 0, 0, 1, 0, 0, 0},
+-- DISABLED: }
+-- DISABLED: for Row, Pixels in ipairs(HeartPixels) do
+-- DISABLED:     for Col, Pixel in ipairs(Pixels) do
+-- DISABLED:         if Pixel == 1 then
+-- DISABLED:             New("Frame", {
+-- DISABLED:                 BackgroundColor3 = Color3.fromRGB(255, 50, 100),
+-- DISABLED:                 BackgroundTransparency = 0.4,
+-- DISABLED:                 BorderSizePixel = 0,
+-- DISABLED:                 Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
+-- DISABLED:                 Size = UDim2.fromOffset(5, 5),
+-- DISABLED:                 ZIndex = 9998,
+-- DISABLED:                 Parent = PixelHeart,
+-- DISABLED:             })
+-- DISABLED:         end
+-- DISABLED:     end
+-- DISABLED: end
+-- DISABLED: 
+-- DISABLED: -- Pixel cloud decoration (top center)
+-- DISABLED: local PixelCloud = New("Frame", {
+-- DISABLED:     Name = "PixelCloud",
+-- DISABLED:     AnchorPoint = Vector2.new(0.5, 0),
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.fromScale(0.5, 12),
+-- DISABLED:     Size = UDim2.fromOffset(70, 30),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Cloud pixels
+-- DISABLED: local CloudPixels = {
+-- DISABLED:     {0,1,1,1,0},
+-- DISABLED:     {1,1,1,1,1},
+-- DISABLED:     {1,1,1,1,1},
+-- DISABLED:     {0,1,1,1,0},
+-- DISABLED: }
+-- DISABLED: for Row, Pixels in ipairs(CloudPixels) do
+-- DISABLED:     for Col, Pixel in ipairs(Pixels) do
+-- DISABLED:         if Pixel == 1 then
+-- DISABLED:             New("Frame", {
+-- DISABLED:                 BackgroundColor3 = Color3.fromRGB(120, 120, 140),
+-- DISABLED:                 BackgroundTransparency = 0.6,
+-- DISABLED:                 BorderSizePixel = 0,
+-- DISABLED:                 Position = UDim2.fromOffset((Col-1)*6, (Row-1)*6),
+-- DISABLED:                 Size = UDim2.fromOffset(6, 6),
+-- DISABLED:                 ZIndex = 9998,
+-- DISABLED:                 Parent = PixelCloud,
+-- DISABLED:             })
+-- DISABLED:         end
+-- DISABLED:     end
+-- DISABLED: end
+-- DISABLED: 
+-- DISABLED: -- Pixel lightning bolt (right side)
+-- DISABLED: local PixelLightning = New("Frame", {
+-- DISABLED:     Name = "PixelLightning",
+-- DISABLED:     AnchorPoint = Vector2.new(1, 0.5),
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.new(1, -20, 0.5, 0),
+-- DISABLED:     Size = UDim2.fromOffset(20, 40),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Lightning pixels
+-- DISABLED: local LightningPixels = {
+-- DISABLED:     {0,0,1,0},
+-- DISABLED:     {0,1,1,0},
+-- DISABLED:     {0,1,0,0},
+-- DISABLED:     {1,1,0,0},
+-- DISABLED:     {1,1,0,0},
+-- DISABLED:     {0,1,1,0},
+-- DISABLED:     {0,0,1,0},
+-- DISABLED: }
+-- DISABLED: for Row, Pixels in ipairs(LightningPixels) do
+-- DISABLED:     for Col, Pixel in ipairs(Pixels) do
+-- DISABLED:         if Pixel == 1 then
+-- DISABLED:             New("Frame", {
+-- DISABLED:                 BackgroundColor3 = Color3.fromRGB(255, 255, 0),
+-- DISABLED:                 BackgroundTransparency = 0.4,
+-- DISABLED:                 BorderSizePixel = 0,
+-- DISABLED:                 Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
+-- DISABLED:                 Size = UDim2.fromOffset(5, 5),
+-- DISABLED:                 ZIndex = 9998,
+-- DISABLED:                 Parent = PixelLightning,
+-- DISABLED:             })
+-- DISABLED:         end
+-- DISABLED:     end
+-- DISABLED: end
+-- DISABLED: 
+-- DISABLED: -- Pixel diamond (left side middle)
+-- DISABLED: local PixelDiamond = New("Frame", {
+-- DISABLED:     Name = "PixelDiamond",
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Position = UDim2.fromOffset(20, 0.4),
+-- DISABLED:     Size = UDim2.fromOffset(24, 24),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Diamond pixels
+-- DISABLED: local DiamondPixels = {
+-- DISABLED:     {0,0,1,0,0},
+-- DISABLED:     {0,1,1,1,0},
+-- DISABLED:     {1,1,1,1,1},
+-- DISABLED:     {0,1,1,1,0},
+-- DISABLED:     {0,0,1,0,0},
+-- DISABLED: }
+-- DISABLED: for Row, Pixels in ipairs(DiamondPixels) do
+-- DISABLED:     for Col, Pixel in ipairs(Pixels) do
+-- DISABLED:         if Pixel == 1 then
+-- DISABLED:             New("Frame", {
+-- DISABLED:                 BackgroundColor3 = Color3.fromRGB(0, 255, 255),
+-- DISABLED:                 BackgroundTransparency = 0.4,
+-- DISABLED:                 BorderSizePixel = 0,
+-- DISABLED:                 Position = UDim2.fromOffset((Col-1)*5, (Row-1)*5),
+-- DISABLED:                 Size = UDim2.fromOffset(5, 5),
+-- DISABLED:                 ZIndex = 9998,
+-- DISABLED:                 Parent = PixelDiamond,
+-- DISABLED:             })
+-- DISABLED:         end
+-- DISABLED:     end
+-- DISABLED: end
+-- DISABLED: 
+-- DISABLED: -- Floating pixel sprites (small animated-looking dots)
+-- DISABLED: local PixelSprites = New("Frame", {
+-- DISABLED:     Name = "PixelSprites",
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Size = UDim2.fromScale(1, 1),
+-- DISABLED:     ZIndex = 9998,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: -- Random colorful pixel dots scattered around
+-- DISABLED: local SpritePositions = {
+-- DISABLED:     {0.15, 0.08, Color3.fromRGB(255, 0, 100), 5},
+-- DISABLED:     {0.85, 0.12, Color3.fromRGB(0, 255, 150), 4},
+-- DISABLED:     {0.08, 0.45, Color3.fromRGB(255, 200, 0), 6},
+-- DISABLED:     {0.92, 0.55, Color3.fromRGB(200, 0, 255), 5},
+-- DISABLED:     {0.2, 0.88, Color3.fromRGB(0, 200, 255), 4},
+-- DISABLED:     {0.78, 0.82, Color3.fromRGB(255, 100, 0), 6},
+-- DISABLED:     {0.5, 0.05, Color3.fromRGB(100, 255, 100), 4},
+-- DISABLED:     {0.35, 0.95, Color3.fromRGB(255, 50, 200), 5},
+-- DISABLED: }
+-- DISABLED: for _, Sprite in ipairs(SpritePositions) do
+-- DISABLED:     New("Frame", {
+-- DISABLED:         BackgroundColor3 = Sprite[3],
+-- DISABLED:         BackgroundTransparency = 0.45,
+-- DISABLED:         BorderSizePixel = 0,
+-- DISABLED:         Position = UDim2.fromScale(Sprite[1], Sprite[2]),
+-- DISABLED:         Size = UDim2.fromOffset(Sprite[4], Sprite[4]),
+-- DISABLED:         ZIndex = 9998,
+-- DISABLED:         Parent = PixelSprites,
+-- DISABLED:     })
+-- DISABLED: end
+-- DISABLED: 
+-- DISABLED: -- Subtle scanlines (kept but less transparent)
+-- DISABLED: local Scanlines = New("ImageLabel", {
+-- DISABLED:     Name = "Scanlines",
+-- DISABLED:     BackgroundTransparency = 1,
+-- DISABLED:     Image = "rbxassetid://13583392678",
+-- DISABLED:     ImageColor3 = Color3.new(0, 0, 0),
+-- DISABLED:     ImageTransparency = 0.85,
+-- DISABLED:     ScaleType = Enum.ScaleType.Tile,
+-- DISABLED:     TileSize = UDim2.fromOffset(1, 4),
+-- DISABLED:     Size = UDim2.fromScale(1, 1),
+-- DISABLED:     ZIndex = 9997,
+-- DISABLED:     Parent = CartoonOverlay,
+-- DISABLED: })
+-- DISABLED: 
+-- DISABLED: Library.CartoonOverlay = CartoonOverlay
 
 ScreenGui.DescendantRemoving:Connect(function(Instance)
     Library:RemoveFromRegistry(Instance)
